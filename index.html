@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我ぞ魔王！〜勇者イジメと世界滅亡の狂想曲〜</title>
+    <style>
+        :root {
+            --bg-color: #0b0713;
+            --panel-bg: #160f26;
+            --panel-border: #4a2e80;
+            --gold: #ffd700;
+            --gold-dark: #b89700;
+            --purple-light: #b673ff;
+            --purple-dark: #2a1845;
+            --red: #ff4757;
+            --green: #2ed573;
+            --blue: #1e90ff;
+            --text-main: #f1f2f6;
+            --text-sub: #a4b0be;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, 'ヒラギノ角ゴ Pro W3', 'Hiragino Kaku Gothic Pro', 'メイリオ', Meiryo, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(255, 69, 0, 0.1) 0%, transparent 40%);
+        }
+
+        #app {
+            width: 100%;
+            max-width: 800px;
+            background: var(--panel-bg);
+            border: 3px solid var(--gold);
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(184, 151, 0, 0.3), inset 0 0 15px rgba(0,0,0,0.8);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* ステータスバー */
+        .status-header {
+            background: linear-gradient(180deg, #24143d 0%, #160f26 100%);
+            border-bottom: 2px solid var(--panel-border);
+            padding: 12px 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .stat-box {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .stat-val-text {
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .bar-bg {
+            height: 8px;
+            background: #221a36;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 50%;
+            transition: width 0.4s ease-in-out, background-color 0.3s;
+            border-radius: 4px;
+        }
+
+        .bar-gold { background: linear-gradient(90deg, #f1c40f, #ffd700); }
+        .bar-mental { background: linear-gradient(90deg, #ff4757, #ff6b81); }
+        .bar-threat { background: linear-gradient(90deg, #9b59b6, #8e44ad); }
+        .bar-stress { background: linear-gradient(90deg, #e67e22, #d35400); }
+
+        /* メインエリア */
+        .game-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 480px;
+            position: relative;
+        }
+
+        .turn-badge {
+            align-self: center;
+            background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+            color: #000;
+            font-weight: bold;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            letter-spacing: 1px;
+        }
+
+        /* キャラクター対話エリア */
+        .speaker-box {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            background: rgba(10, 5, 20, 0.6);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .avatar-container {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            background: var(--purple-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            box-shadow: 0 0 15px rgba(186, 115, 255, 0.3);
+            overflow: hidden;
+        }
+
+        .avatar-svg {
+            width: 70px;
+            height: 70px;
+        }
+
+        .dialogue-content {
+            flex: 1;
+        }
+
+        .speaker-name {
+            font-weight: bold;
+            color: var(--gold);
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .speaker-tag {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: var(--purple-light);
+            color: #000;
+        }
+
+        .dialogue-text {
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--text-main);
+        }
+
+        /* 選択肢ボタン */
+        .choices-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .choice-btn {
+            background: linear-gradient(135deg, #251642 0%, #1a0f30 100%);
+            border: 2px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .choice-btn:hover {
+            border-color: var(--gold);
+            background: linear-gradient(135deg, #3d236e 0%, #28164b 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(184, 151, 0, 0.2);
+        }
+
+        .choice-btn:active {
+            transform: translateY(0);
+        }
+
+        .choice-title {
+            font-weight: bold;
+            color: #fff;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .choice-sub {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+        }
+
+        /* タイトル・ギャラリー画面 */
+        .title-screen, .gallery-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-color);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .title-crown {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            animation: floatCrown 3s ease-in-out infinite;
+        }
+
+        @keyframes floatCrown {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .main-title {
+            font-size: 2.2rem;
+            color: var(--gold);
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            line-height: 1.3;
+        }
+
+        .main-sub {
+            color: var(--text-sub);
+            font-size: 1rem;
+            margin-bottom: 30px;
+            max-width: 500px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff4757, var(--gold));
+            color: #000;
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255, 71, 87, 0.5);
+            transition: all 0.2s;
+            margin: 6px;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(255, 215, 0, 0.8);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--panel-border);
+            color: var(--text-main);
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 10px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 6px;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        /* エンディングモーダル */
+        .ending-modal {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(5, 2, 12, 0.95);
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .end-badge {
+            background: var(--gold);
+            color: #000;
+            font-weight: bold;
+            padding: 4px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+
+        .end-title {
+            font-size: 2rem;
+            color: var(--gold);
+            margin-bottom: 16px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .end-desc {
+            font-size: 1rem;
+            color: var(--text-main);
+            max-width: 550px;
+            line-height: 1.6;
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            margin-bottom: 24px;
+        }
+
+        /* 図鑑 */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            width: 100%;
+            max-height: 360px;
+            overflow-y: auto;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .gallery-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        .gallery-card.unlocked {
+            border-color: var(--gold);
+            background: rgba(184, 151, 0, 0.1);
+        }
+
+        .gallery-num {
+            font-size: 0.75rem;
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .gallery-name {
+            font-size: 0.95rem;
+            font-weight: bold;
+            margin: 4px 0;
+            color: #fff;
+        }
+
+        .gallery-card.locked .gallery-name {
+            color: var(--text-sub);
+        }
+
+        @media (max-width: 600px) {
+            .speaker-box { flex-direction: column; text-align: center; gap: 10px; }
+            .speaker-name { justify-content: center; }
+            .main-title { font-size: 1.6rem; }
+            .game-body { padding: 12px; }
+            .status-header { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+
+    <!-- タイトル画面 -->
+    <div id="title-screen" class="title-screen">
+        <div class="title-crown">👑😈</div>
+        <h1 class="main-title">我ぞ魔王！<br><span style="font-size: 1.4rem; color:#fff;">〜勇者イジメと世界滅亡の狂想曲〜</span></h1>
+        <p class="main-sub">「薬草？ 買い占めておいたぞ！ はっはっは！」<br>ドヤ顔で勇者を邪魔し、全12種類のエンドをコンプリートせよ！</p>
+        <div>
+            <button class="btn-primary" onclick="startGame()">侵略を開始する！</button>
+            <button class="btn-secondary" onclick="openGallery()">結末図鑑（<span id="unlocked-count">0</span>/12）</button>
+        </div>
+    </div>
+
+    <!-- 結末図鑑画面 -->
+    <div id="gallery-screen" class="gallery-screen" style="display: none;">
+        <h2 style="color: var(--gold); margin-bottom: 10px;">全12種 結末図鑑</h2>
+        <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 15px;">解放したエンディングを閲覧できます</p>
+        <div class="gallery-grid" id="gallery-list"></div>
+        <button class="btn-secondary" onclick="closeGallery()">タイトルへ戻る</button>
+    </div>
+
+    <!-- ゲームプレイ画面 -->
+    <div class="status-header">
+        <div class="stat-box">
+            <div class="stat-label">
+                <span>💰 魔王軍資金</span>
+                <span id="val-gold" class="stat-val-text">500 G</span>
+            </div>
+            <div class="bar-bg"><div id="bar-gold" class="bar-fill bar-gold" style="width: 50%;"></div></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">
+                <span>💔 勇者メンタル</span>
+                <span id="val-mental" class="stat-val-text">100</span>
+            </div>
+            <div class="bar-bg"><div id="bar-mental" class="bar-fill bar-mental" style="width: 100%;"></div></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">
+                <span>🔥 魔王脅威度</span>
+                <span id="val-threat" class="stat-val-text">20</span>
+            </div>
+            <div class="bar-bg"><div id="bar-threat" class="bar-fill bar-threat" style="width: 20%;"></div></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">
+                <span>💢 執事ストレス</span>
+                <span id="val-stress" class="stat-val-text">0</span>
+            </div>
+            <div class="bar-bg"><div id="bar-stress" class="bar-fill bar-stress" style="width: 0%;"></div></div>
+        </div>
+    </div>
+
+    <div class="game-body">
+        <div class="turn-badge" id="turn-display">DAY 1 / 15</div>
+
+        <div class="speaker-box">
+            <div class="avatar-container" id="avatar-box">
+                <!-- SVG Icon -->
+            </div>
+            <div class="dialogue-content">
+                <div class="speaker-name" id="speaker-name">
+                    <span>執事セバスチャン</span>
+                    <span class="speaker-tag" id="speaker-tag">側近</span>
+                </div>
+                <div class="dialogue-text" id="dialogue-text">
+                    「魔王様、勇者が旅立ちました。いかがなさいますか？」
+                </div>
+            </div>
+        </div>
+
+        <div class="choices-container" id="choices-box">
+            <!-- Dynamic Choice Buttons -->
+        </div>
+    </div>
+
+    <!-- エンディングモーダル -->
+    <div id="ending-modal" class="ending-modal" style="display: none;">
+        <div class="end-badge" id="end-badge">ENDING 01</div>
+        <h2 class="end-title" id="end-title">魔王完全勝利エンド</h2>
+        <div class="end-desc" id="end-desc"></div>
+        <div>
+            <button class="btn-primary" onclick="backToTitle()">タイトルへ戻る</button>
+            <button class="btn-secondary" onclick="openGallery()">図鑑を見る</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+/* ===================================================
+   SVG アバター描画
+=================================================== */
+const SVGS = {
+    maou: `<svg class="avatar-svg" viewBox="0 0 100 100">
+        <path d="M20 30 L35 45 L50 20 L65 45 L80 30 L75 60 L25 60 Z" fill="#ffd700"/>
+        <circle cx="50" cy="55" r="30" fill="#8a2be2"/>
+        <circle cx="38" cy="50" r="5" fill="#fff"/><circle cx="38" cy="50" r="2" fill="#000"/>
+        <circle cx="62" cy="50" r="5" fill="#fff"/><circle cx="62" cy="50" r="2" fill="#000"/>
+        <path d="M 35 68 Q 50 80 65 68" stroke="#ffd700" stroke-width="4" fill="none"/>
+    </svg>`,
+    sebastian: `<svg class="avatar-svg" viewBox="0 0 100 100">
+        <circle cx="50" cy="45" r="28" fill="#dcdde1"/>
+        <rect x="30" y="70" width="40" height="30" fill="#2f3640"/>
+        <circle cx="42" cy="42" r="4" fill="#2f3640"/>
+        <circle cx="62" cy="42" r="5" stroke="#ffd700" stroke-width="2" fill="none"/>
+        <path d="M 40 55 Q 50 60 60 55" stroke="#2f3640" stroke-width="3" fill="none"/>
+    </svg>`,
+    hero: `<svg class="avatar-svg" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="28" fill="#ffdd99"/>
+        <path d="M 25 45 Q 50 20 75 45 L 80 35 Q 50 10 20 35 Z" fill="#1e90ff"/>
+        <circle cx="40" cy="48" r="4" fill="#000"/>
+        <circle cx="60" cy="48" r="4" fill="#000"/>
+        <path d="M 42 62 Q 50 56 58 62" stroke="#000" stroke-width="3" fill="none"/>
+    </svg>`,
+    lucian: `<svg class="avatar-svg" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="32" fill="#1e0f35"/>
+        <polygon points="50,10 20,80 80,80" fill="#4a2e80"/>
+        <circle cx="40" cy="45" r="4" fill="#ff4757"/>
+        <circle cx="60" cy="45" r="4" fill="#ff4757"/>
+        <path d="M 35 65 Q 50 75 65 65" stroke="#ff4757" stroke-width="3" fill="none"/>
+    </svg>`,
+    zenon: `<svg class="avatar-svg" viewBox="0 0 100 100">
+        <rect x="25" y="25" width="50" height="55" rx="10" fill="#2f3542"/>
+        <rect x="35" y="42" width="30" height="8" fill="#ffd700"/>
+        <circle cx="42" cy="46" r="2" fill="#ff4757"/>
+        <circle cx="58" cy="46" r="2" fill="#ff4757"/>
+    </svg>`,
+    slime: `<svg class="avatar-svg" viewBox="0 0 100 100">
+        <path d="M 20 70 Q 15 35 50 35 Q 85 35 80 70 Q 50 85 20 70 Z" fill="#2ed573"/>
+        <circle cx="40" cy="55" r="5" fill="#fff"/><circle cx="40" cy="55" r="2" fill="#000"/>
+        <circle cx="60" cy="55" r="5" fill="#fff"/><circle cx="60" cy="55" r="2" fill="#000"/>
+    </svg>`
+};
+
+/* ===================================================
+   Web Audio API 効果音
+=================================================== */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function playSound(type) {
+    try {
+        if (!audioCtx) audioCtx = new AudioCtx();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+            osc.start(now);
+            osc.stop(now + 0.08);
+        } else if (type === 'win') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.15);
+            osc.frequency.setValueAtTime(783.99, now + 0.3);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+            osc.start(now);
+            osc.stop(now + 0.6);
+        } else if (type === 'bad') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.4);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        }
+    } catch (e) {}
+}
+
+/* ===================================================
+   12のエンディング定義
+=================================================== */
+const ENDINGS = [
+    {
+        id: 1,
+        title: "① 魔王完全勝利エンド",
+        badge: "TRUE BAD END",
+        desc: "ふははは！見ろ、陰湿な嫌がらせ（買い占め・野宿強要）により精神を完膚なきまでに叩き折られた勇者の姿を！ 冒険を断念した勇者をよそに、我が偉大なる魔王軍は世界を無事に滅ぼしたのだ！"
+    },
+    {
+        id: 2,
+        title: "② 実質世界征服エンド",
+        badge: "ECONOMIC DOMINANCE",
+        desc: "薬草、宿屋、武器屋、物流…全てを我が魔王軍が買い占めて買収完了！勇者が乗り込んできた時には『我が城を潰せば世界経済が破滅するぞ？』と告げ、戦わずして世界を実質支配したのだ！"
+    },
+    {
+        id: 3,
+        title: "③ クソゲー批判殺到エンド",
+        badge: "META METEOR",
+        desc: "【重大なお知らせ】実は今まで魔王として勇者を嫌がらせしていたこの世界は、現実世界で絶賛発売中のRPG『勇者の冒険』だった！ 強すぎる部下・大魔導士ルシアンを序盤に配置した結果、全画面即死魔法でプレイヤーの勇者が秒殺！ プレイヤーたちから『調整ミス！』『序盤に置いていい敵じゃない！』と批判が殺到し、クソゲーとして大炎上してしまった…"
+    },
+    {
+        id: 4,
+        title: "④ 勇者パーティスカウトエンド",
+        badge: "NEW CAREER",
+        desc: "『なぜこんな事をする！』という勇者に『かっこいいからだ！』とドヤ顔で答えたら、黒魔術師不在で困っていた勇者にスカウトされた！魔王を辞め、社会保険完備の勇者パーティに移籍完了！"
+    },
+    {
+        id: 5,
+        title: "⑤ 推し活魔王エンド",
+        badge: "FAN CLUB PRESIDENT",
+        desc: "『お前の成長が見たくて…』と告白。後方父親面で涙を流しながら勇者を大絶賛！魔王城は勇者の推し活グッズ置き場と化し、我はファンクラブ会長として生きる道を選んだ。"
+    },
+    {
+        id: 6,
+        title: "⑥ 勇者勝利エンド（王道敗北）",
+        badge: "ROYAL DEFEAT",
+        desc: "正面から堂々と戦ってしまった結果、健全に育った勇者の必殺技を叩き込まれて大敗北！『ぐわあああ！』と叫びながら散っていく、実にフツーで王道なラストであった…"
+    },
+    {
+        id: 7,
+        title: "⑦ 部下裏切りエンド",
+        badge: "LABOR STRIKE",
+        desc: "執事セバスチャンのストレスが限界突破！『…限界です、魔王様』と冷たい笑顔で反乱を起こされ、我は城を追放された。セバスチャンが新CEOとして魔王軍をクリーンに経営し始めた。"
+    },
+    {
+        id: 8,
+        title: "⑧ 異業種転職エンド",
+        badge: "SUCCESSFUL BUSINESS",
+        desc: "道具の買い占めや罠作りをしているうちに、商売とダンジョン設計の楽しさに目覚めてしまった！我は魔王を引退し、人間界で大人気ダンジョンプロデューサーとして大成功を収めた。"
+    },
+    {
+        id: 9,
+        title: "⑨ 魔王恋する（セバスチャン）エンド",
+        badge: "SWEET ROMANCE",
+        desc: "日頃の労いによりセバスチャンと絆を深めた魔王！決戦直前『世界破壊などバカバカしい、我はセバスチャンと二人で穏やかに過ごしたい！』と宣言。セバスチャンも『我が一生、お側でお支えいたします』と微笑み、勇者を放置してイチャイチャ空間が完成した！"
+    },
+    {
+        id: 10,
+        title: "⑩ 金欠バイト生活エンド",
+        badge: "POVERTY LIFE",
+        desc: "無計画に買い占めすぎて魔王軍が破産！ 家賃も部下の給料も払えなくなり、我が自らコンビニで夜勤バイトを始める羽目に…『いらっしゃいませー…（勇者様、お疲れ様です…）』"
+    },
+    {
+        id: 11,
+        title: "⑪ 自爆事故死エンド",
+        badge: "ACCIDENTAL DEATH",
+        desc: "勇者をハメるための落とし穴と爆弾トラップを設置中、脚を滑らせて自ら作った罠にダイブ！ ドカンと大爆発してあっけなく死亡。執事に『バカなんですか？』と呆れられ幕を閉じた。"
+    },
+    {
+        id: 12,
+        title: "⑫ 放置放置エンド",
+        badge: "LAZY KING",
+        desc: "魔王城でゴロゴロ寝ていたら、無傷・無風の勇者が玉座に到着。『え、これ倒していいの？』と困惑する勇者に秒で刺されてゲームセット。やる気は出そうね！"
+    }
+];
+
+/* ===================================================
+   ゲーム状態 & シナリオ定義
+=================================================== */
+let gameState = {
+    turn: 1,
+    gold: 500,
+    mental: 100,
+    threat: 20,
+    stress: 0,
+    idleCount: 0,
+    tradeCount: 0,
+    sebLoveCount: 0
+};
+
+const SCENARIOS = [
+    {
+        turn: 1,
+        speaker: "sebastian",
+        name: "執事セバスチャン",
+        tag: "側近",
+        text: "魔王様、勇者が『はじまりの村』を出発いたしました。最初の妨害はいかがなさいますか？",
+        choices: [
+            {
+                title: "村の「やくそう」を全買い占めする！",
+                sub: "資金 -150G / 勇者メンタル -25",
+                action: (s) => { s.gold -= 150; s.mental -= 25; s.stress += 5; }
+            },
+            {
+                title: "最弱のスライムくんを配置する",
+                sub: "資金 -30G / 勇者メンタル +10（ワンパンされて自信を与える）",
+                action: (s) => { s.gold -= 30; s.mental += 10; s.threat += 5; }
+            },
+            {
+                title: "執事セバスチャンの肩をもんで労う",
+                sub: "執事ストレス -20 / セバスチャン好感度UP",
+                action: (s) => { s.stress -= 20; s.sebLoveCount += 1; }
+            }
+        ]
+    },
+    {
+        turn: 2,
+        speaker: "hero",
+        name: "勇者",
+        tag: "ターゲット",
+        text: "「くっ…毒状態になったのに道具屋に薬草が売ってない！？ 一体誰がこんな嫌がらせを…！」",
+        choices: [
+            {
+                title: "高値で「やくそう」を転売して爆利を得る",
+                sub: "資金 +300G / 勇者メンタル -10 / 商業度UP",
+                action: (s) => { s.gold += 300; s.mental -= 10; s.tradeCount += 1; }
+            },
+            {
+                title: "村の「宿屋」も全室貸し切って野宿させる",
+                sub: "資金 -200G / 勇者メンタル -30",
+                action: (s) => { s.gold -= 200; s.mental -= 30; }
+            },
+            {
+                title: "高笑いしながら高見の見物（何もしない）",
+                sub: "放置カウント +1",
+                action: (s) => { s.idleCount += 1; }
+            }
+        ]
+    },
+    {
+        turn: 3,
+        speaker: "sebastian",
+        name: "執事セバスチャン",
+        tag: "側近",
+        text: "魔王様、勇者が第1ダンジョンに到着しました。守備に誰を配置いたしますか？",
+        choices: [
+            {
+                title: "プロ噛ませ犬「暗黒騎士ゼノン」を派遣",
+                sub: "資金 -100G / 脅威度 +20 / 絶妙な戦い",
+                action: (s) => { s.gold -= 100; s.threat += 20; }
+            },
+            {
+                title: "強すぎる部下「大魔導士ルシアン」を派遣する！",
+                sub: "※敵が強すぎてゲームバランスが壊れる予感がする…",
+                action: (s) => { triggerEnding(3); }
+            },
+            {
+                title: "ダンジョン内に自作のトラップを仕掛ける",
+                sub: "自爆のリスクあり！？",
+                action: (s) => { 
+                    if (Math.random() < 0.5) {
+                        triggerEnding(11);
+                    } else {
+                        s.mental -= 20; s.tradeCount += 1;
+                    }
+                }
+            }
+        ]
+    },
+    {
+        turn: 4,
+        speaker: "zenon",
+        name: "暗黒騎士ゼノン",
+        tag: "中ボス",
+        text: "「魔王様！ 勇者めと熱い攻防を繰り広げ、ギリギリのところで負けてやりましたぞ！（汗ダラダラ）」",
+        choices: [
+            {
+                title: "「でかしたゼノン！」と給料をアップする",
+                sub: "資金 -100G / 執事ストレス -10",
+                action: (s) => { s.gold -= 100; s.stress -= 10; }
+            },
+            {
+                title: "「負けたから減給な！」とケチる",
+                sub: "執事ストレス +20",
+                action: (s) => { s.stress += 20; }
+            },
+            {
+                title: "セバスチャンに高級紅茶を淹れてあげる",
+                sub: "執事ストレス -15 / セバスチャン好感度UP",
+                action: (s) => { s.stress -= 15; s.sebLoveCount += 1; }
+            }
+        ]
+    },
+    {
+        turn: 5,
+        speaker: "hero",
+        name: "勇者",
+        tag: "ターゲット",
+        text: "「宝箱だ！…って中身ただの爆弾じゃねーか！！ 魔王め、絶対に許さないぞ！！」",
+        choices: [
+            {
+                title: "全宝箱をミミック（偽物）と爆弾にする",
+                sub: "資金 -100G / 勇者メンタル -25",
+                action: (s) => { s.gold -= 100; s.mental -= 25; }
+            },
+            {
+                title: "勇者の実家に魔王軍の「税務調査」を入れる",
+                sub: "勇者メンタル -30 / 脅威度 +15",
+                action: (s) => { s.mental -= 30; s.threat += 15; }
+            },
+            {
+                title: "二度寝する",
+                sub: "放置カウント +1",
+                action: (s) => { s.idleCount += 1; }
+            }
+        ]
+    },
+    {
+        turn: 6,
+        speaker: "sebastian",
+        name: "執事セバスチャン",
+        tag: "側近",
+        text: "魔王様、買い占めた大量のやくそうと武器が倉庫を圧迫しております。どうなさいますか？",
+        choices: [
+            {
+                title: "「我が自ら片付けを手伝うぞ！」と一緒に整理",
+                sub: "執事ストレス -20 / セバスチャン好感度UP",
+                action: (s) => { s.stress -= 20; s.sebLoveCount += 1; }
+            },
+            {
+                title: "ネットオークションに出品して大儲けする",
+                sub: "資金 +400G / 商業度UP",
+                action: (s) => { s.gold += 400; s.tradeCount += 1; }
+            },
+            {
+                title: "執事に「全部ひとりで片付けろ」と命じる",
+                sub: "執事ストレス +35",
+                action: (s) => { s.stress += 35; }
+            }
+        ]
+    },
+    {
+        turn: 7,
+        speaker: "slime",
+        name: "スライムくん",
+        tag: "雑魚",
+        text: "「魔王様！ 本日も勇者様に爽やかにワンパンされてまいりました！ 経験値もたっぷり献上しました！」",
+        choices: [
+            {
+                title: "健気なスライムくんを撫でてやる",
+                sub: "執事ストレス -5",
+                action: (s) => { s.stress -= 5; }
+            },
+            {
+                title: "スライムくんを100体並べて壁にする",
+                sub: "資金 -50G / 勇者メンタル -20",
+                action: (s) => { s.gold -= 50; s.mental -= 20; }
+            },
+            {
+                title: "「クビだ！」と理不尽に追い出す",
+                sub: "執事ストレス +20",
+                action: (s) => { s.stress += 20; }
+            }
+        ]
+    },
+    {
+        turn: 8,
+        speaker: "hero",
+        name: "勇者",
+        tag: "ターゲット",
+        text: "「回復系のシスターがMP切れでキレてるし、弓矢も買えないし、もう冒険どころじゃないよ…」",
+        choices: [
+            {
+                title: "ボスの直前に「セーブポイントっぽい爆弾」を置く",
+                sub: "資金 -100G / 勇者メンタル -30",
+                action: (s) => { s.gold -= 100; s.mental -= 30; }
+            },
+            {
+                title: "セバスチャンを強引にお茶会に連れ出す",
+                sub: "執事ストレス -10 / セバスチャン好感度UP",
+                action: (s) => { s.stress -= 10; s.sebLoveCount += 1; }
+            },
+            {
+                title: "放置してマンガを読む",
+                sub: "放置カウント +1",
+                action: (s) => { s.idleCount += 1; }
+            }
+        ]
+    },
+    {
+        turn: 9,
+        speaker: "sebastian",
+        name: "執事セバスチャン",
+        tag: "側近",
+        text: "魔王様、魔王城の改築予算が不足しております。私めの給料も滞っておりますが…",
+        choices: [
+            {
+                title: "人間界の不動産を買収して家賃収入を得る",
+                sub: "資金 +500G / 商業度UP",
+                action: (s) => { s.gold += 500; s.tradeCount += 1; }
+            },
+            {
+                title: "「執事の給料はゼロだ！」とドヤ顔",
+                sub: "執事ストレス +40",
+                action: (s) => { s.stress += 40; }
+            },
+            {
+                title: "自分の豪華な金ピカ銅像を建てる",
+                sub: "資金 -300G / 脅威度 +20",
+                action: (s) => { s.gold -= 300; s.threat += 20; }
+            }
+        ]
+    },
+    {
+        turn: 10,
+        speaker: "lucian",
+        name: "大魔導士ルシアン",
+        tag: "強すぎる部下",
+        text: "「魔王様、僕の魔力なら序盤のダンジョンごと消し去れますが……出撃させますか？」",
+        choices: [
+            {
+                title: "「出撃だ！」と圧倒的パワーで踏みつぶさせる",
+                sub: "※敵が強すぎてクソゲー炎上注意！！",
+                action: (s) => { triggerEnding(3); }
+            },
+            {
+                title: "「強すぎてゲームにならん」とお茶を飲ませて待機させる",
+                sub: "脅威度 +10 / 執事ストレス +5",
+                action: (s) => { s.threat += 10; s.stress += 5; }
+            },
+            {
+                title: "「まだ我が陰湿に痛めつける！」と断る",
+                sub: "脅威度 +10",
+                action: (s) => { s.threat += 10; }
+            }
+        ]
+    },
+    {
+        turn: 11,
+        speaker: "hero",
+        name: "勇者",
+        tag: "ターゲット",
+        text: "「ついに魔王城の城門に辿り着いたぞ！…って何で城門が有料自動ドアになってんだよ！！」",
+        choices: [
+            {
+                title: "通行料として「1,000,000G」を請求する",
+                sub: "勇者メンタル -30",
+                action: (s) => { s.mental -= 30; }
+            },
+            {
+                title: "自分で作った最新セキュリティ（爆弾）を試す",
+                sub: "自爆のリスク！？",
+                action: (s) => {
+                    if (Math.random() < 0.6) triggerEnding(11);
+                    else s.mental -= 20;
+                }
+            },
+            {
+                title: "城門の前で寝たふりをする",
+                sub: "放置カウント +1",
+                action: (s) => { s.idleCount += 1; }
+            }
+        ]
+    },
+    {
+        turn: 12,
+        speaker: "sebastian",
+        name: "執事セバスチャン",
+        tag: "側近",
+        text: "魔王様、いよいよ決戦の時が近づいております。我が魔王軍の経営状態はいかがでしょうか？",
+        choices: [
+            {
+                title: "セバスチャンに「二人でゆっくり休もう」と語りかける",
+                sub: "※セバスチャン好感度十分なら…？",
+                action: (s) => {
+                    if (s.sebLoveCount >= 3) triggerEnding(9);
+                    else { s.stress -= 10; s.sebLoveCount += 1; }
+                }
+            },
+            {
+                title: "世界の全商業施設を買収完了と宣言！",
+                sub: "※条件次第で…",
+                action: (s) => {
+                    if (s.tradeCount >= 2 || s.gold >= 999) triggerEnding(2);
+                    else s.gold += 200;
+                }
+            },
+            {
+                title: "「ダンジョン建築会社」の設立を宣言する",
+                sub: "※条件次第で…",
+                action: (s) => {
+                    if (s.tradeCount >= 2) triggerEnding(8);
+                    else s.threat += 10;
+                }
+            }
+        ]
+    },
+    {
+        turn: 13,
+        speaker: "hero",
+        name: "勇者",
+        tag: "ターゲット",
+        text: "「ハァ…ハァ…ついに玉座の間だ！ 魔王、覚悟しろ！！（ボロボロ）」",
+        choices: [
+            {
+                title: "玉座の床を落とし穴にして地下に落とす",
+                sub: "勇者メンタル -40",
+                action: (s) => { s.mental -= 40; }
+            },
+            {
+                title: "「よくぞ来た！」とご馳走を振る舞う",
+                sub: "勇者メンタル +30",
+                action: (s) => { s.mental += 30; }
+            },
+            {
+                title: "無言でドヤ顔のポーズを決める",
+                sub: "脅威度 +20",
+                action: (s) => { s.threat += 20; }
+            }
+        ]
+    },
+    {
+        turn: 14,
+        speaker: "hero",
+        name: "勇者",
+        tag: "ターゲット（運命の問答）",
+        text: "「魔王！ なぜお前は正面から戦わず、薬草の買い占めや嫌がらせばかりするんだ！？ 一体なぜなんだ！！」",
+        choices: [
+            {
+                title: "「混沌とした世界が見てみたいからだ！」",
+                sub: "王道の悪役として問答する",
+                action: (s) => { /* Continue */ }
+            },
+            {
+                title: "「かっこいいからだ！（ドヤ顔）」",
+                sub: "※スカウトの予感！？",
+                action: (s) => { triggerEnding(4); }
+            },
+            {
+                title: "「お前の成長が見たくて…（涙）」",
+                sub: "※推し活の予感！？",
+                action: (s) => { triggerEnding(5); }
+            }
+        ]
+    },
+    {
+        turn: 15,
+        speaker: "maou",
+        name: "魔王（あなた）",
+        tag: "最終決戦",
+        text: "「ふははは！ 我が陰湿なる策略の数々、思い知ったか！ さあ、我が前にひれ伏すがよい！！」",
+        choices: [
+            {
+                title: "圧倒的な魔王のパワーで引導を渡す！",
+                sub: "決着の時！",
+                action: (s) => { evaluateFinalEnding(); }
+            },
+            {
+                title: "最後まで嫌がらせ（ニセ宝箱）で応戦する",
+                sub: "決着の時！",
+                action: (s) => { evaluateFinalEnding(); }
+            }
+        ]
+    }
+];
+
+/* ===================================================
+   ゲームエンジン & 状態管理
+=================================================== */
+function updateUI() {
+    document.getElementById('turn-display').innerText = `DAY ${gameState.turn} / 15`;
+
+    document.getElementById('val-gold').innerText = `${gameState.gold} G`;
+    document.getElementById('bar-gold').style.width = `${Math.min(100, Math.max(0, gameState.gold / 10))}%`;
+
+    document.getElementById('val-mental').innerText = `${gameState.mental}`;
+    document.getElementById('bar-mental').style.width = `${Math.min(100, Math.max(0, gameState.mental))}%`;
+
+    document.getElementById('val-threat').innerText = `${gameState.threat}`;
+    document.getElementById('bar-threat').style.width = `${Math.min(100, Math.max(0, gameState.threat))}%`;
+
+    document.getElementById('val-stress').innerText = `${gameState.stress}`;
+    document.getElementById('bar-stress').style.width = `${Math.min(100, Math.max(0, gameState.stress))}%`;
+
+    const unlocked = getUnlockedEndings();
+    document.getElementById('unlocked-count').innerText = unlocked.length;
+}
+
+function loadScenario(turnIndex) {
+    if (turnIndex >= SCENARIOS.length) {
+        evaluateFinalEnding();
+        return;
+    }
+
+    const scenario = SCENARIOS[turnIndex];
+
+    document.getElementById('avatar-box').innerHTML = SVGS[scenario.speaker] || SVGS.maou;
+    document.getElementById('speaker-name').querySelector('span:first-child').innerText = scenario.name;
+    document.getElementById('speaker-tag').innerText = scenario.tag;
+    document.getElementById('dialogue-text').innerText = scenario.text;
+
+    const choicesBox = document.getElementById('choices-box');
+    choicesBox.innerHTML = '';
+
+    scenario.choices.forEach((c) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.innerHTML = `
+            <div>
+                <span class="choice-title">${c.title}</span>
+                <span class="choice-sub">${c.sub}</span>
+            </div>
+            <span style="color: var(--gold); font-size: 1.2rem;">▶</span>
+        `;
+        btn.onclick = () => {
+            playSound('click');
+            c.action(gameState);
+            checkInstantEndings();
+        };
+        choicesBox.appendChild(btn);
+    });
+
+    updateUI();
+}
+
+function checkInstantEndings() {
+    if (gameState.gold <= 0) {
+        triggerEnding(10);
+        return;
+    }
+    if (gameState.stress >= 100) {
+        triggerEnding(7);
+        return;
+    }
+    if (gameState.sebLoveCount >= 4) {
+        triggerEnding(9);
+        return;
+    }
+    if (gameState.idleCount >= 4) {
+        triggerEnding(12);
+        return;
+    }
+    if (gameState.gold >= 999) {
+        triggerEnding(2);
+        return;
+    }
+    if (gameState.mental <= 0) {
+        triggerEnding(1);
+        return;
+    }
+
+    gameState.turn++;
+    if (gameState.turn <= 15) {
+        loadScenario(gameState.turn - 1);
+    } else {
+        evaluateFinalEnding();
+    }
+}
+
+function evaluateFinalEnding() {
+    if (gameState.sebLoveCount >= 3) {
+        triggerEnding(9);
+    } else if (gameState.mental <= 20) {
+        triggerEnding(1);
+    } else if (gameState.tradeCount >= 3) {
+        triggerEnding(8);
+    } else {
+        triggerEnding(6);
+    }
+}
+
+function triggerEnding(endingId) {
+    const end = ENDINGS.find(e => e.id === endingId);
+    if (!end) return;
+
+    saveUnlockedEnding(endingId);
+
+    if (endingId === 1 || endingId === 2 || endingId === 4 || endingId === 5 || endingId === 8 || endingId === 9) {
+        playSound('win');
+    } else {
+        playSound('bad');
+    }
+
+    document.getElementById('end-badge').innerText = `ENDING ${String(end.id).padStart(2, '0')} - ${end.badge}`;
+    document.getElementById('end-title').innerText = end.title;
+    document.getElementById('end-desc').innerText = end.desc;
+
+    document.getElementById('ending-modal').style.display = 'flex';
+}
+
+function getUnlockedEndings() {
+    try {
+        const data = localStorage.getItem('maou_game_endings');
+        return data ? JSON.parse(data) : [];
+    } catch(e) {
+        return [];
+    }
+}
+
+function saveUnlockedEnding(id) {
+    try {
+        const unlocked = getUnlockedEndings();
+        if (!unlocked.includes(id)) {
+            unlocked.push(id);
+            localStorage.setItem('maou_game_endings', JSON.stringify(unlocked));
+        }
+    } catch(e) {}
+}
+
+function openGallery() {
+    playSound('click');
+    const unlocked = getUnlockedEndings();
+    const list = document.getElementById('gallery-list');
+    list.innerHTML = '';
+
+    ENDINGS.forEach(e => {
+        const isUnlocked = unlocked.includes(e.id);
+        const card = document.createElement('div');
+        card.className = `gallery-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+        card.innerHTML = `
+            <div class="gallery-num">ENDING ${String(e.id).padStart(2, '0')}</div>
+            <div class="gallery-name">${isUnlocked ? e.title : '？？？？？？？？'}</div>
+            <div style="font-size:0.75rem; color:var(--text-sub);">${isUnlocked ? e.desc : '未解放の結末です。条件を探してみましょう！'}</div>
+        `;
+        list.appendChild(card);
+    });
+
+    document.getElementById('gallery-screen').style.display = 'flex';
+}
+
+function closeGallery() {
+    playSound('click');
+    document.getElementById('gallery-screen').style.display = 'none';
+}
+
+function startGame() {
+    playSound('click');
+    gameState = {
+        turn: 1,
+        gold: 500,
+        mental: 100,
+        threat: 20,
+        stress: 0,
+        idleCount: 0,
+        tradeCount: 0,
+        sebLoveCount: 0
+    };
+
+    document.getElementById('title-screen').style.display = 'none';
+    document.getElementById('ending-modal').style.display = 'none';
+
+    loadScenario(0);
+}
+
+function backToTitle() {
+    playSound('click');
+    document.getElementById('ending-modal').style.display = 'none';
+    document.getElementById('title-screen').style.display = 'flex';
+    updateUI();
+}
+
+window.onload = () => {
+    updateUI();
+};
+</script>
+</body>
+</html>
